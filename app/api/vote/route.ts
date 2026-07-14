@@ -1,52 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createServiceClient } from "@/lib/supabase";
+import { sendEmail } from "@/lib/email";
 
-const COOKIE_NAME = "afstemning_voter";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
-
-// Reports whether the current browser (identified by its voter cookie) has
-// already voted, and for whom — lets the UI show results instead of the
-// ballot on repeat visits.
-export async function GET(req: NextRequest) {
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (!token) return NextResponse.json({ votedFor: null });
-
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from("votes")
-    .select("nomination_id")
-    .eq("voter_token", token)
-    .maybeSingle();
-
-  return NextResponse.json({ votedFor: data?.nomination_id ?? null });
-}
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cbs-afstemning.vercel.app";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
-  const { nominationId } = await req.json();
-  if (!nominationId || typeof nominationId !== "string") {
-    return NextResponse.json({ error: "Ugyldig nominering." }, { status: 400 });
-  }
+  const body = await req.json();
+  const nominationId = String(body.nominationId ?? "").trim();
+  const voter_name = String(body.voter_name ?? "").trim();
+  const voter_email = String(body.voter_email ?? "").trim().toLowerCase();
 
-  let token = req.cookies.get(COOKIE_NAME)?.value;
-  const isNewToken = !token;
-  if (!token) token = randomUUID();
+  if (!nominationId || !voter_name || !voter_email) {
+    return NextResponse.json({ error: "Udfyld venligst alle felter." }, { status: 400 });
+  }
+  if (!EMAIL_RE.test(voter_email)) {
+    return NextResponse.json({ error: "Ugyldig e-mailadresse." }, { status: 400 });
+  }
 
   const supabase = createServiceClient();
-
-  const { data: existing } = await supabase
-    .from("votes")
-    .select("nomination_id")
-    .eq("voter_token", token)
-    .maybeSingle();
-
-  if (existing) {
-    return NextResponse.json({ error: "Du har allerede stemt." }, { status: 409 });
-  }
 
   const { data: nomination } = await supabase
     .from("nominations")
-    .select("id")
+    .select("id, nominee_name")
     .eq("id", nominationId)
     .eq("status", "approved")
     .maybeSingle();
@@ -55,27 +32,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Denne nominering findes ikke længere." }, { status: 404 });
   }
 
-  const { error } = await supabase
+  const { data: existing } = await supabase
     .from("votes")
-    .insert({ nomination_id: nominationId, voter_token: token });
+    .select("id")
+    .eq("nomination_id", nominationId)
+    .eq("voter_email", voter_email)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ error: "Du har allerede stemt på denne nominering." }, { status: 409 });
+  }
+
+  const token = randomUUID();
+  const { error } = await supabase.from("votes").insert({
+    nomination_id: nominationId,
+    voter_name,
+    voter_email,
+    status: "unverified",
+    verification_token: token,
+  });
 
   if (error) {
-    // Unique constraint race: two requests from the same new cookie at once.
+    // Unique constraint race: two requests for the same (nomination, email) at once.
     if (error.code === "23505") {
-      return NextResponse.json({ error: "Du har allerede stemt." }, { status: 409 });
+      return NextResponse.json({ error: "Du har allerede stemt på denne nominering." }, { status: 409 });
     }
     return NextResponse.json({ error: "Der skete en fejl. Prøv igen." }, { status: 500 });
   }
 
-  const res = NextResponse.json({ ok: true });
-  if (isNewToken) {
-    res.cookies.set(COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: COOKIE_MAX_AGE,
-      path: "/",
-    });
-  }
-  return res;
+  const verifyUrl = `${SITE_URL}/api/verify?type=vote&token=${token}`;
+  await sendEmail(
+    voter_email,
+    "Bekræft din stemme til Årets Cykelhelt",
+    `
+      <p>Hej ${voter_name},</p>
+      <p>Vi har modtaget din stemme på <strong>${nomination.nominee_name}</strong> til Årets Cykelhelt.</p>
+      <p>Bekræft venligst at det er dig der har stemt, ved at klikke her:</p>
+      <p><a href="${verifyUrl}">Bekræft stemme</a></p>
+      <p>Stemmen tælles først med, når du har bekræftet.</p>
+      <p>Mvh<br/>Copenhagen Bike Show</p>
+    `
+  );
+
+  return NextResponse.json({ ok: true });
 }

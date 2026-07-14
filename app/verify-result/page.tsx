@@ -14,6 +14,8 @@ export default function VerifyResultPage() {
 function VerifyResultContent() {
   const searchParams = useSearchParams();
   const ok = searchParams.get("ok") === "1";
+  const type = searchParams.get("type");
+  const isVote = type === "vote";
 
   return (
     <main className="max-w-xl mx-auto px-4 py-20 text-center">
@@ -24,7 +26,9 @@ function VerifyResultContent() {
             Bekræftet!
           </h1>
           <p className="text-sm text-gray-600">
-            Tak for din nominering. Den vises nu på siden og kan modtage stemmer.
+            {isVote
+              ? "Tak for din stemme. Den er nu talt med i resultatet."
+              : "Tak for din nominering. Den vises nu på siden og kan modtage stemmer."}
           </p>
         </>
       ) : (
@@ -34,7 +38,7 @@ function VerifyResultContent() {
             Linket virker ikke
           </h1>
           <p className="text-sm text-gray-600">
-            Linket er ugyldigt eller allerede brugt. Prøv at nominere igen, hvis du ikke allerede har bekræftet.
+            Linket er ugyldigt eller allerede brugt. Prøv at {isVote ? "stemme" : "nominere"} igen, hvis du ikke allerede har bekræftet.
           </p>
         </>
       )}

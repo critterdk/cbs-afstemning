@@ -5,15 +5,15 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { mockNominations, type Nomination } from "@/lib/mockData";
 import NominationForm from "@/components/NominationForm";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import VoteForm from "@/components/VoteForm";
 
 export default function NominationsSection({ showTitle = true }: { showTitle?: boolean }) {
   const [nominations, setNominations] = useState<Nomination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [votedFor, setVotedFor] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
+  const [votingFor, setVotingFor] = useState<string | null>(null);
+  const [voteSentFor, setVoteSentFor] = useState<string | null>(null);
 
   async function loadNominations() {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -29,50 +29,10 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
   }
 
   useEffect(() => {
-    async function load() {
-      try {
-        await loadNominations();
-        const statusRes = await fetch("/api/vote");
-        if (statusRes.ok) {
-          const status = await statusRes.json();
-          if (status.votedFor) setVotedFor(status.votedFor);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    loadNominations().finally(() => setLoading(false));
   }, []);
 
-  async function castVote(nominationId: string) {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nominationId }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        setError(body.error ?? "Der skete en fejl. Prøv igen.");
-        return;
-      }
-      setVotedFor(nominationId);
-      setNominations((prev) =>
-        prev
-          .map((n) => (n.id === nominationId ? { ...n, vote_count: n.vote_count + 1 } : n))
-          .sort((a, b) => b.vote_count - a.vote_count)
-      );
-    } catch {
-      setError("Der skete en fejl. Prøv igen.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const totalVotes = nominations.reduce((sum, n) => sum + n.vote_count, 0);
-  const showResults = votedFor !== null;
 
   return (
     <section>
@@ -89,7 +49,6 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
       {!loading && nominations.length === 0 && (
         <p className="text-sm text-gray-400">Ingen nomineringer endnu — vær den første!</p>
       )}
-      {error && <p className="text-sm text-red-700 mb-3">{error}</p>}
 
       {!loading && nominations.length > 0 && (
         <ul className="space-y-3">
@@ -119,34 +78,44 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
                       <p className="text-sm text-gray-500">{nomination.reasoning}</p>
                     </div>
                   </div>
-                  {!showResults && (
+                  {votingFor !== nomination.id && voteSentFor !== nomination.id && (
                     <button
                       className="btn-red text-sm px-4 py-2 rounded shrink-0"
-                      disabled={submitting}
-                      onClick={() => castVote(nomination.id)}
+                      onClick={() => setVotingFor(nomination.id)}
                     >
                       Stem
                     </button>
                   )}
                 </div>
-                {showResults && (
-                  <div className="mt-2">
-                    <div className="h-2 bg-gray-100 rounded overflow-hidden">
-                      <div className="bar-fill h-full" style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {pct}% ({nomination.vote_count} stemmer)
-                      {votedFor === nomination.id && " — din stemme"}
-                    </p>
+
+                <div className="mt-2">
+                  <div className="h-2 bg-gray-100 rounded overflow-hidden">
+                    <div className="bar-fill h-full" style={{ width: `${pct}%` }} />
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {pct}% ({nomination.vote_count} stemmer)
+                  </p>
+                </div>
+
+                {votingFor === nomination.id && (
+                  <VoteForm
+                    nominationId={nomination.id}
+                    onCancel={() => setVotingFor(null)}
+                    onSent={() => {
+                      setVotingFor(null);
+                      setVoteSentFor(nomination.id);
+                    }}
+                  />
+                )}
+                {voteSentFor === nomination.id && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Tjek din e-mail og bekræft, så tælles din stemme med.
+                  </p>
                 )}
               </li>
             );
           })}
         </ul>
-      )}
-      {showResults && (
-        <p className="text-xs text-gray-400 mt-3">Tak for din stemme! Resultaterne opdateres løbende.</p>
       )}
       {enlargedPhoto && <PhotoLightbox src={enlargedPhoto} onClose={() => setEnlargedPhoto(null)} />}
     </section>

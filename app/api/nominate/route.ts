@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: "Der skete en fejl. Prøv igen." }, { status: 500 });
 
-  const verifyUrl = `${SITE_URL}/api/verify?token=${token}`;
+  const verifyUrl = `${SITE_URL}/api/verify?type=nomination&token=${token}`;
   await sendEmail(
     submitter_email,
     "Bekræft din nominering til Årets Cykelhelt",
