@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --font-heading: var(--font-barlow-condensed), sans-serif;
+  --font-body: var(--font-montserrat), sans-serif;
+
+  --color-red: #be1622;
+  --color-red-hover: #e42734;
+  --color-green: #008d36;
+  --color-green-hover: #40ad50;
+  --color-black: #1a1a1a;
+  --color-text: #444444;
+  --color-bg-alt: #f5f5f5;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+}
+
+.btn-red {
+  background-color: var(--color-red);
+  color: #fff;
+}
+.btn-red:hover:not(:disabled) {
+  background-color: var(--color-red-hover);
+}
+.btn-red:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bar-fill {
+  background-color: var(--color-green);
+}
