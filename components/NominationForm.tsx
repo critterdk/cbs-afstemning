@@ -87,6 +87,51 @@ export default function NominationForm({ onDone }: { onDone: () => void }) {
           value={form.nominee_name}
           onChange={(e) => setForm({ ...form, nominee_name: e.target.value })}
         />
+
+        <div>
+          <p className="text-sm font-semibold text-black mb-1">Tilføj et foto</p>
+          {!photoPreview ? (
+            <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-300 rounded-lg py-5 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--color-red)"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+                <circle cx="12" cy="13" r="3.5" />
+              </svg>
+              <span className="text-sm font-medium" style={{ color: "var(--color-red)" }}>
+                Klik for at vælge et billede
+              </span>
+              <span className="text-xs text-gray-400">Valgfrit, men gør nomineringen mere personlig · maks 5 MB</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPhotoChange(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          ) : (
+            <div className="flex items-center gap-3 border border-gray-200 rounded-lg p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photoPreview} alt="" className="w-14 h-14 rounded object-cover border border-gray-200 shrink-0" />
+              <p className="flex-1 text-sm text-gray-600 truncate">{photo?.name}</p>
+              <button
+                type="button"
+                className="text-xs text-gray-500 hover:underline shrink-0"
+                onClick={() => onPhotoChange(null)}
+              >
+                Fjern
+              </button>
+            </div>
+          )}
+        </div>
+
         <textarea
           className="border border-gray-300 rounded px-3 py-2 w-full"
           placeholder="Hvorfor fortjener personen at vinde?"
@@ -94,21 +139,6 @@ export default function NominationForm({ onDone }: { onDone: () => void }) {
           value={form.reasoning}
           onChange={(e) => setForm({ ...form, reasoning: e.target.value })}
         />
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">Foto (valgfrit, maks 5 MB)</label>
-          <div className="flex items-center gap-3">
-            {photoPreview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoPreview} alt="" className="w-14 h-14 rounded object-cover border border-gray-200" />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              className="text-sm"
-              onChange={(e) => onPhotoChange(e.target.files?.[0] ?? null)}
-            />
-          </div>
-        </div>
         <input
           className="border border-gray-300 rounded px-3 py-2 w-full"
           placeholder="Dit navn"
