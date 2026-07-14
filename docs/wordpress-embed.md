@@ -1,8 +1,7 @@
 # Embedding CBS-Afstemning on copenhagenbikeshow.dk
 
 CBS-Afstemning is a separate Next.js application hosted on Vercel
-(replace `<deployment-url>` below with the real `.vercel.app` URL, or a
-dedicated subdomain, once deployed), not part of the WordPress site's
+(`https://cbs-afstemning.vercel.app`), not part of the WordPress site's
 codebase. It's embedded into WordPress/Bricks via `<iframe>`, with a small
 script that lets the iframe resize itself to fit its content instead of
 showing a fixed-height scrollbar.
@@ -11,17 +10,17 @@ Nothing needs to be installed, hosted, or maintained on the WordPress side
 beyond the iframe + script below. Vote counts update live as people vote —
 no rebuild or redeploy needed on either side.
 
-- URL: `https://<deployment-url>/widget`
+- URL: `https://cbs-afstemning.vercel.app/widget`
 
 ## 1. Add the iframe
 
 In Bricks, add a **Code** element wherever the voting widget should appear
-and paste (adjust the `src` to the real deployment URL):
+and paste:
 
 ```html
 <iframe
   id="cbs-widget-afstemning"
-  src="https://<deployment-url>/widget"
+  src="https://cbs-afstemning.vercel.app/widget"
   style="width:100%; border:0; display:block;"
   scrolling="no"
   title="Afstemning fra Copenhagen Bike Show"
@@ -42,7 +41,7 @@ gives an iframe by default, which will cut content off.
 <script>
   window.addEventListener("message", function (event) {
     if (!event.data || event.data.type !== "cbs-widget-height") return;
-    document.querySelectorAll("iframe[src*='<deployment-url>']").forEach(function (iframe) {
+    document.querySelectorAll("iframe[src*='cbs-afstemning.vercel.app']").forEach(function (iframe) {
       if (iframe.contentWindow === event.source) {
         iframe.style.height = event.data.height + "px";
       }
