@@ -96,9 +96,19 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
             return (
               <li key={nomination.id} className="border border-gray-200 p-3 rounded">
                 <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-black">{nomination.nominee_name}</p>
-                    <p className="text-sm text-gray-500">{nomination.reasoning}</p>
+                  <div className="flex items-center gap-3">
+                    {nomination.photo_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={nomination.photo_url}
+                        alt=""
+                        className="w-12 h-12 rounded object-cover border border-gray-200 shrink-0"
+                      />
+                    )}
+                    <div>
+                      <p className="font-semibold text-black">{nomination.nominee_name}</p>
+                      <p className="text-sm text-gray-500">{nomination.reasoning}</p>
+                    </div>
                   </div>
                   {!showResults && (
                     <button

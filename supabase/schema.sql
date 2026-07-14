@@ -9,6 +9,7 @@ create table if not exists nominations (
   id uuid primary key default gen_random_uuid(),
   nominee_name text not null,
   reasoning text not null,
+  photo_url text,
   submitter_name text not null,
   submitter_email text not null,
   raffle_opt_in boolean not null default false,
@@ -35,6 +36,7 @@ select
   n.id,
   n.nominee_name,
   n.reasoning,
+  n.photo_url,
   n.created_at,
   count(v.id)::int as vote_count
 from nominations n

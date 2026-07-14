@@ -3,6 +3,7 @@ export type Nomination = {
   id: string;
   nominee_name: string;
   reasoning: string;
+  photo_url: string | null;
   created_at: string;
   vote_count: number;
 };
@@ -12,6 +13,7 @@ export const mockNominations: Nomination[] = [
     id: "mock-1",
     nominee_name: "Anna Jensen",
     reasoning: "Startede en cykelklub for nye danskere i lokalområdet.",
+    photo_url: null,
     created_at: new Date().toISOString(),
     vote_count: 12,
   },
@@ -19,6 +21,7 @@ export const mockNominations: Nomination[] = [
     id: "mock-2",
     nominee_name: "Peter Nielsen",
     reasoning: "Frivillig cykelmekaniker der reparerer cykler gratis for skoleelever.",
+    photo_url: null,
     created_at: new Date().toISOString(),
     vote_count: 8,
   },
@@ -26,6 +29,7 @@ export const mockNominations: Nomination[] = [
     id: "mock-3",
     nominee_name: "Sofie Larsen",
     reasoning: "Kæmper for bedre cykelstier i sin kommune.",
+    photo_url: null,
     created_at: new Date().toISOString(),
     vote_count: 5,
   },

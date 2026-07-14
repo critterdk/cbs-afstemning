@@ -6,6 +6,7 @@ type AdminNomination = {
   id: string;
   nominee_name: string;
   reasoning: string;
+  photo_url: string | null;
   submitter_name: string;
   submitter_email: string;
   raffle_opt_in: boolean;
@@ -105,19 +106,29 @@ export default function AdminPage() {
         {visible.map((n) => (
           <li key={n.id} className="border border-gray-200 rounded p-3">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold text-black">
-                  {n.nominee_name}{" "}
-                  <span className="text-xs font-normal text-gray-400">({n.vote_count} stemmer)</span>
-                </p>
-                <p className="text-sm text-gray-500">{n.reasoning}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Indsendt af {n.submitter_name} ({n.submitter_email})
-                  {n.raffle_opt_in && " · deltager i lodtrækning"}
-                </p>
-                <p className="text-xs mt-1">
-                  Status: <span className="font-medium">{STATUS_LABEL[n.status]}</span>
-                </p>
+              <div className="flex items-start gap-3">
+                {n.photo_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={n.photo_url}
+                    alt=""
+                    className="w-14 h-14 rounded object-cover border border-gray-200 shrink-0"
+                  />
+                )}
+                <div>
+                  <p className="font-semibold text-black">
+                    {n.nominee_name}{" "}
+                    <span className="text-xs font-normal text-gray-400">({n.vote_count} stemmer)</span>
+                  </p>
+                  <p className="text-sm text-gray-500">{n.reasoning}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Indsendt af {n.submitter_name} ({n.submitter_email})
+                    {n.raffle_opt_in && " · deltager i lodtrækning"}
+                  </p>
+                  <p className="text-xs mt-1">
+                    Status: <span className="font-medium">{STATUS_LABEL[n.status]}</span>
+                  </p>
+                </div>
               </div>
               <div className="flex flex-col gap-1 items-end shrink-0 text-sm">
                 {n.status !== "approved" && (

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 export default function NominationForm({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({
     nominee_name: "",
@@ -10,19 +12,44 @@ export default function NominationForm({ onDone }: { onDone: () => void }) {
     submitter_email: "",
     raffle_opt_in: false,
   });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  function onPhotoChange(file: File | null) {
+    setError(null);
+    if (!file) {
+      setPhoto(null);
+      setPhotoPreview(null);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Filen skal være et billede.");
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setError("Billedet må maks fylde 5 MB.");
+      return;
+    }
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
 
   async function submit() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/nominate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const fd = new FormData();
+      fd.append("nominee_name", form.nominee_name);
+      fd.append("reasoning", form.reasoning);
+      fd.append("submitter_name", form.submitter_name);
+      fd.append("submitter_email", form.submitter_email);
+      fd.append("raffle_opt_in", String(form.raffle_opt_in));
+      if (photo) fd.append("photo", photo);
+
+      const res = await fetch("/api/nominate", { method: "POST", body: fd });
       const body = await res.json();
       if (!res.ok) {
         setError(body.error ?? "Der skete en fejl. Prøv igen.");
@@ -67,6 +94,21 @@ export default function NominationForm({ onDone }: { onDone: () => void }) {
           value={form.reasoning}
           onChange={(e) => setForm({ ...form, reasoning: e.target.value })}
         />
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Foto (valgfrit, maks 5 MB)</label>
+          <div className="flex items-center gap-3">
+            {photoPreview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoPreview} alt="" className="w-14 h-14 rounded object-cover border border-gray-200" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="text-sm"
+              onChange={(e) => onPhotoChange(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
         <input
           className="border border-gray-300 rounded px-3 py-2 w-full"
           placeholder="Dit navn"
