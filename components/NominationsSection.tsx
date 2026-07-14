@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { mockNominations, type Nomination } from "@/lib/mockData";
 import NominationForm from "@/components/NominationForm";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 export default function NominationsSection({ showTitle = true }: { showTitle?: boolean }) {
   const [nominations, setNominations] = useState<Nomination[]>([]);
@@ -12,6 +13,7 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
 
   async function loadNominations() {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -98,12 +100,19 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {nomination.photo_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={nomination.photo_url}
-                        alt=""
-                        className="w-12 h-12 rounded object-cover border border-gray-200 shrink-0"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setEnlargedPhoto(nomination.photo_url)}
+                        className="shrink-0"
+                        aria-label={`Se billede af ${nomination.nominee_name} i fuld størrelse`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={nomination.photo_url}
+                          alt=""
+                          className="w-12 h-12 rounded object-cover border border-gray-200 cursor-pointer hover:opacity-80"
+                        />
+                      </button>
                     )}
                     <div>
                       <p className="font-semibold text-black">{nomination.nominee_name}</p>
@@ -139,6 +148,7 @@ export default function NominationsSection({ showTitle = true }: { showTitle?: b
       {showResults && (
         <p className="text-xs text-gray-400 mt-3">Tak for din stemme! Resultaterne opdateres løbende.</p>
       )}
+      {enlargedPhoto && <PhotoLightbox src={enlargedPhoto} onClose={() => setEnlargedPhoto(null)} />}
     </section>
   );
 }
